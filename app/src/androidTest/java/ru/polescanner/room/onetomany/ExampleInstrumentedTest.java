@@ -47,21 +47,24 @@ public class ExampleInstrumentedTest {
 
     @Test
     public void roomTest(){
-        String shortCode = "stuff";
-        Category category = new Category(shortCode, "Books about stuff");
-        Book bookOne = new Book("333", "Feed", shortCode);
-        Book bookTwo = new Book("999", "Dies the Fire", shortCode);
-        sut.addCategory(category);
-        sut.addBooks(bookOne, bookTwo);
+        String shortCodeOne = "stuff";
+        String shortCodeTwo = "love";
+        Category categoryOne = new Category(shortCodeOne, "Books about stuff");
+        Category categoryTwo = new Category(shortCodeTwo, "Books about love");
+        Book bookOne = new Book("333", "Feed");
+        Book bookTwo = new Book("555", "Dies the Fire");
+        Book bookThree = new Book("777", "Love me tender");
+        sut.add(categoryOne, bookOne, bookTwo);
+        sut.add(categoryTwo, bookOne, bookThree);
 
         List<Book.CategoryAndBooks> all = sut.getAll();
-        assertThat(all.size()).isEqualTo(1);
-        assertThat(all.get(0).category).isEqualTo(category);
-        assertThat(all.get(0).books).containsExactly(bookOne, bookTwo);
+        assertThat(all.size()).isEqualTo(2);
+        assertThat(all.get(0).category).isEqualTo(categoryOne);
+        assertThat(all.get(1).books).containsExactly(bookOne, bookThree);
 
-        Book.CategoryAndBooks one = sut.getById(category.shortCode);
-        assertThat(one.category).isEqualTo(category);
-        assertThat(one.books).containsExactly(bookOne, bookTwo);
+        Book.CategoryAndBooks one = sut.getById(categoryTwo.shortCode);
+        assertThat(one.category).isEqualTo(categoryTwo);
+        assertThat(one.books).containsExactly(bookOne, bookThree);
     }
 
 

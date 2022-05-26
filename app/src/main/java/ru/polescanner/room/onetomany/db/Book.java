@@ -7,28 +7,25 @@ import androidx.room.Embedded;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Ignore;
+import androidx.room.Index;
 import androidx.room.Insert;
+import androidx.room.Junction;
+import androidx.room.OnConflictStrategy;
 import androidx.room.PrimaryKey;
 import androidx.room.Query;
 import androidx.room.Relation;
 import androidx.room.Transaction;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-@Entity(    tableName = "books",
-            foreignKeys = {@ForeignKey( entity = Category.class,
-                                        parentColumns = "shortCode",
-                                        childColumns = "categoryShortCode",
-                                        onDelete = ForeignKey.CASCADE
-                                      )}
-        )
+@Entity(    tableName = "books")
 public class Book {
     @NonNull
     @PrimaryKey
     String isbn;
     String title;
-    @ColumnInfo(index = true)
-    String categoryShortCode;
 
     public Book() {}
 
@@ -48,21 +45,46 @@ public class Book {
     }
 
     @Ignore
-    public Book(String isbn, String title, String categoryShortCode) {
+    public Book(String isbn, String title) {
         this.isbn = isbn;
         this.title = title;
-        this.categoryShortCode = categoryShortCode;
-
-
     }
 
     @androidx.room.Dao
     public interface Dao{
-        @Insert
-        void addCategory(Category category);
+        @Insert(onConflict = OnConflictStrategy.REPLACE)
+        void add(Category category);
+
+        @Insert(onConflict = OnConflictStrategy.REPLACE)
+        void add(Book... books);
+
+        @Insert(onConflict = OnConflictStrategy.REPLACE)
+        void add(BookCategoryJoin... joins);
 
         @Insert
-        void addBooks(Book... books);
+        void addAll(List<BookCategoryJoin> joins);
+
+        default void add(Category category, Book... books){
+            /*Attempt to prevent adding an existing Item to the database -
+            I managed with OnConflictStrategy
+
+            List<Category> categoriesDb = getCategories();
+            List<Book> booksDb = getBooks();
+            if (!categoriesDb.contains(category))
+                add(category);
+            List<Book> booksToDb = new ArrayList<>();
+            for (Book b : books)
+                if (!booksDb.contains(b))
+                    booksToDb.add(b);
+            add(booksToDb.toArray(new Book[0]));
+            */
+            add(category);
+            add(books);
+            List<BookCategoryJoin> bcj = new ArrayList<>();
+            for (Book b : books)
+                bcj.add(new BookCategoryJoin(b.isbn, category.shortCode));
+            addAll(bcj);
+        }
 
         @Transaction
         @Query("SELECT * FROM categories")
@@ -72,6 +94,20 @@ public class Book {
         @Query("SELECT * FROM categories WHERE shortCode = :id")
         CategoryAndBooks getById(String id);
 
+        @Query("SELECT * FROM books")
+        List<Book> getBooks();
+
+        @Query("SELECT * FROM categories")
+        List<Category> getCategories();
+
+        default <T> List<T> aNotB(List<T> listA, List<T> listB) {
+
+            List<T> result = new ArrayList(listA);
+            result.removeAll(listB);
+
+            return result;
+        }
+
     }
 
     public static class CategoryAndBooks{
@@ -80,9 +116,38 @@ public class Book {
         Category category;
         @Relation(
                 parentColumn = "shortCode",
-                entityColumn = "categoryShortCode")
-        public
-        List<Book> books;
+                entityColumn = "isbn",
+                associateBy = @Junction(    value = BookCategoryJoin.class,
+                                            parentColumn = "shortCode",
+                                            entityColumn = "isbn")
+                )
+        public List<Book> books;
+    }
+
+    @Entity(tableName = "books_categories",
+            primaryKeys = {"isbn", "shortCode"},
+            indices = {@Index("isbn"), @Index("shortCode")},
+            foreignKeys = { @ForeignKey(entity = Category.class,
+                                        parentColumns = "shortCode",
+                                        childColumns = "shortCode",
+                                        onDelete = ForeignKey.CASCADE),
+                            @ForeignKey(entity = Book.class,
+                                        parentColumns = "isbn",
+                                        childColumns = "isbn",
+                                        onDelete = ForeignKey.CASCADE)})
+    static class BookCategoryJoin{
+        @NonNull
+        String isbn;
+        @NonNull
+        String shortCode;
+
+        public BookCategoryJoin() {}
+
+        @Ignore
+        public BookCategoryJoin(@NonNull String isbn, @NonNull String shortCode) {
+            this.isbn = isbn;
+            this.shortCode = shortCode;
+        }
     }
 }
 
