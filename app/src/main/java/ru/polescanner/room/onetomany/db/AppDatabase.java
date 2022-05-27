@@ -11,7 +11,7 @@ import androidx.room.RoomDatabase;
 public abstract class AppDatabase extends RoomDatabase {
     private static AppDatabase INSTANCE;
 
-    public abstract Book.Dao bookDbDao();
+    public abstract BookStore bookDbDao();
 
     public static AppDatabase getDbInstance(Context context) {
         if (INSTANCE == null) {

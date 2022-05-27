@@ -5,20 +5,25 @@ import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
+import java.util.Map;
+
 @Entity (tableName = "categories")
 public class Category {
     @NonNull
     @PrimaryKey
-    public
-    String shortCode;
+    public String shortCode;
     String displayName;
+
+    @Ignore
+    Map<Rating, Book> books;
 
     public Category() {}
 
     @Ignore
-    public Category(String shortCode, String displayName) {
+    public Category(String shortCode, String displayName, Map<Rating, Book> books) {
         this.shortCode = shortCode;
         this.displayName = displayName;
+        this.books = books;
     }
 
     @Override

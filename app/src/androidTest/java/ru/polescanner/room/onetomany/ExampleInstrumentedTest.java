@@ -18,6 +18,7 @@ import java.util.List;
 
 import ru.polescanner.room.onetomany.db.AppDatabase;
 import ru.polescanner.room.onetomany.db.Book;
+import ru.polescanner.room.onetomany.db.BookStore;
 import ru.polescanner.room.onetomany.db.Category;
 
 /**
@@ -28,7 +29,7 @@ import ru.polescanner.room.onetomany.db.Category;
 @RunWith(AndroidJUnit4.class)
 public class ExampleInstrumentedTest {
     private AppDatabase mDb;
-    private Book.Dao sut;
+    private BookStore sut;
 
     @Before
     public void createDb(){
