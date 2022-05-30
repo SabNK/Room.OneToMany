@@ -51,25 +51,12 @@ public class Book {
         this.title = title;
     }
 
-    public static class CategoryAndBooks{
+    public static class BooksMap {
         @Embedded
         public Category category;
-        @Relation(
-                parentColumn = "shortCode",
-                entityColumn = "isbn",
-                associateBy = @Junction(    value = BookCategoryJoin.class,
-                                            parentColumn = "shortCode",
-                                            entityColumn = "isbn")
-                )
+        @Embedded
         public Book book;
-        @Relation(
-                parentColumn = "shortCode",
-                entityColumn = "rating",
-                associateBy = @Junction(value = BookCategoryJoin.class,
-                parentColumn = "shortCode",
-                entityColumn = "rating"))
         public Rating rating;
-
     }
 
     @Entity(tableName = "books_categories",
@@ -83,17 +70,17 @@ public class Book {
                                         parentColumns = "isbn",
                                         childColumns = "isbn",
                                         onDelete = ForeignKey.CASCADE)})
-    static class BookCategoryJoin{
+    static class BooksTable {
         @NonNull
         String isbn;
         @NonNull
         String shortCode;
         Rating rating;
 
-        public BookCategoryJoin() {}
+        public BooksTable() {}
 
         @Ignore
-        public BookCategoryJoin(@NonNull String isbn, @NonNull String shortCode, Rating rating) {
+        public BooksTable(@NonNull String isbn, @NonNull String shortCode, Rating rating) {
             this.isbn = isbn;
             this.shortCode = shortCode;
             this.rating = rating;

@@ -6,63 +6,84 @@ import androidx.room.Query;
 import androidx.room.Transaction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @androidx.room.Dao
 public interface BookStore {
+    //ToDo Rethink OnConflictStrategy
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void add(Category category);
+    void addPojoCategory(Category... category);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void add(Book... books);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void add(Book.BookCategoryJoin... joins);
+    void add(Book.BooksTable... joins);
 
-    @Insert
-    void addAll(List<Book.BookCategoryJoin> joins);
-
-    default void add(Category category, Book... books) {
-        /*Attempt to prevent adding an existing Item to the database -
-        I managed with OnConflictStrategy
-
-        List<Category> categoriesDb = getCategories();
-        List<Book> booksDb = getBooks();
-        if (!categoriesDb.contains(category))
-            add(category);
-        List<Book> booksToDb = new ArrayList<>();
-        for (Book b : books)
-            if (!booksDb.contains(b))
-                booksToDb.add(b);
-        add(booksToDb.toArray(new Book[0]));
-        */
-        add(category);
-        add(books);
-        List<Book.BookCategoryJoin> bcj = new ArrayList<>();
-        for (Book b : books)
-            bcj.add(new Book.BookCategoryJoin(b.isbn, category.shortCode));
-        addAll(bcj);
+    @Transaction
+    default void add(Category... category) {
+        List<Category> categories = Arrays.asList(category);
+        List<Book.BooksTable> bcj = new ArrayList<>();
+        for (Category cat : categories)
+            if (cat.books != null) {
+                Book[] booksToAdd =  cat.books.values().toArray(new Book[0]);
+                add(booksToAdd);
+                for (Map.Entry<Rating, Book> entry : cat.books.entrySet()) {
+                    Rating r = entry.getKey();
+                    Book b = entry.getValue();
+                    bcj.add(new Book.BooksTable(b.isbn, cat.shortCode, r));
+                }
+            }
+        addPojoCategory(category);
+        add(bcj.toArray(new Book.BooksTable[0]));
     }
 
-    @Transaction
-    @Query("SELECT * FROM categories")
-    List<Book.CategoryAndBooks> getAll();
 
-    @Transaction
-    @Query("SELECT * FROM categories WHERE shortCode = :id")
-    Book.CategoryAndBooks getById(String id);
+    @Query("SELECT * FROM categories JOIN books_categories ON categories.shortCode = books_categories.shortCode " +
+                                    "JOIN books ON books.isbn = books_categories.isbn")
+    List<Book.BooksMap> getAllCategoryAndBook();
+
+    //ToDo Rethink of many objects-copy in the system.
+    default List<Category> getAll(){
+        List<Category> categories = getAllPojoCategories();
+        //ToDo move to Constructor
+        /*for (Category category : categories)
+            category.books = new HashMap<>();*/
+        List<Book.BooksMap> cabs = getAllCategoryAndBook();
+        for (Book.BooksMap cab : cabs) {
+            int j = categories.indexOf(cab.category);
+            categories.get(j).books.put(cab.rating, cab.book);
+        }
+        return categories;
+    }
+
+    default Category getById(String id){
+        Category category = getByIdPojoCategory(id);
+        //category.books = new HashMap<>();
+        List<Book.BooksMap> cabs = getByIdCategoryAndBook(id);
+        for (Book.BooksMap cab : cabs)
+            category.books.put(cab.rating, cab.book);
+        return category;
+    }
+
+    @Query("SELECT * FROM categories JOIN books_categories ON categories.shortCode = books_categories.shortCode " +
+                                    "JOIN books ON books.isbn = books_categories.isbn " +
+            "WHERE categories.shortCode = :id")
+    List<Book.BooksMap> getByIdCategoryAndBook(String id);
+
+
 
     @Query("SELECT * FROM books")
     List<Book> getBooks();
 
     @Query("SELECT * FROM categories")
-    List<Category> getCategories();
+    List<Category> getAllPojoCategories();
 
-    //The helper for prevent adding an existing Item
-    default <T> List<T> aNotB(List<T> listA, List<T> listB) {
-        List<T> result = new ArrayList(listA);
-        result.removeAll(listB);
-        return result;
-    }
+    @Query("SELECT * FROM categories WHERE shortCode = :id")
+    Category getByIdPojoCategory(String id);
+
 
 }

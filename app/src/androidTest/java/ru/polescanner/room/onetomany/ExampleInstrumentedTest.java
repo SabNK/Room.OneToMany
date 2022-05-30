@@ -20,6 +20,7 @@ import ru.polescanner.room.onetomany.db.AppDatabase;
 import ru.polescanner.room.onetomany.db.Book;
 import ru.polescanner.room.onetomany.db.BookStore;
 import ru.polescanner.room.onetomany.db.Category;
+import ru.polescanner.room.onetomany.db.Rating;
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -55,17 +56,23 @@ public class ExampleInstrumentedTest {
         Book bookOne = new Book("333", "Feed");
         Book bookTwo = new Book("555", "Dies the Fire");
         Book bookThree = new Book("777", "Love me tender");
-        sut.add(categoryOne, bookOne, bookTwo);
-        sut.add(categoryTwo, bookOne, bookThree);
+        categoryOne.books.put(Rating.A, bookOne);
+        categoryOne.books.put(Rating.B, bookTwo);
 
-        List<Book.CategoryAndBooks> all = sut.getAll();
+        categoryTwo.books.put(Rating.A, bookOne);
+        categoryTwo.books.put(Rating.C, bookThree);
+        sut.add(categoryOne, categoryTwo);
+
+        List<Category> all = sut.getAll();
         assertThat(all.size()).isEqualTo(2);
-        assertThat(all.get(0).category).isEqualTo(categoryOne);
-        assertThat(all.get(1).books).containsExactly(bookOne, bookThree);
+        assertThat(all.get(0)).isEqualTo(categoryOne);
+        assertThat(all.get(1).books.values()).containsExactly(bookOne, bookThree);
+        assertThat(all.get(0).books.keySet()).containsExactly(Rating.A, Rating.B);
 
-        Book.CategoryAndBooks one = sut.getById(categoryTwo.shortCode);
-        assertThat(one.category).isEqualTo(categoryTwo);
-        assertThat(one.books).containsExactly(bookOne, bookThree);
+        Category one = sut.getById(categoryTwo.shortCode);
+        assertThat(one).isEqualTo(categoryTwo);
+        assertThat(one.books.values()).containsExactly(bookOne, bookThree);
+        assertThat(one.books.keySet()).containsExactly(Rating.A, Rating.C);
     }
 
 

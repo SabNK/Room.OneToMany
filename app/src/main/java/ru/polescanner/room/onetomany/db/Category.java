@@ -5,6 +5,7 @@ import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Entity (tableName = "categories")
@@ -15,9 +16,18 @@ public class Category {
     String displayName;
 
     @Ignore
-    Map<Rating, Book> books;
+    public Map<Rating, Book> books;
 
-    public Category() {}
+    public Category() {
+        books = new HashMap<>();
+    }
+
+    @Ignore
+    public Category(@NonNull String shortCode, String displayName) {
+        this.shortCode = shortCode;
+        this.displayName = displayName;
+        this.books = new HashMap<>();
+    }
 
     @Ignore
     public Category(String shortCode, String displayName, Map<Rating, Book> books) {
