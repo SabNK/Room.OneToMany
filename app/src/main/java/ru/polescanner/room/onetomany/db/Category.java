@@ -12,7 +12,7 @@ import java.util.Map;
 public class Category {
     @NonNull
     @PrimaryKey
-    public String shortCode;
+    public String isbn;
     String displayName;
 
     @Ignore
@@ -23,15 +23,15 @@ public class Category {
     }
 
     @Ignore
-    public Category(@NonNull String shortCode, String displayName) {
-        this.shortCode = shortCode;
+    public Category(@NonNull String isbn, String displayName) {
+        this.isbn = isbn;
         this.displayName = displayName;
         this.books = new HashMap<>();
     }
 
     @Ignore
-    public Category(String shortCode, String displayName, Map<Rating, Book> books) {
-        this.shortCode = shortCode;
+    public Category(String isbn, String displayName, Map<Rating, Book> books) {
+        this.isbn = isbn;
         this.displayName = displayName;
         this.books = books;
     }
@@ -43,11 +43,11 @@ public class Category {
 
         Category category = (Category) o;
 
-        return shortCode.equals(category.shortCode);
+        return isbn.equals(category.isbn);
     }
 
     @Override
     public int hashCode() {
-        return shortCode.hashCode();
+        return isbn.hashCode();
     }
 }

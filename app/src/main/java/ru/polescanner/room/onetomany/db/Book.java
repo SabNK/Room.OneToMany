@@ -52,37 +52,37 @@ public class Book {
     }
 
     public static class BooksMap {
-        @Embedded
+        @Embedded(prefix = "c_")
         public Category category;
-        @Embedded
+        @Embedded(prefix = "b_")
         public Book book;
         public Rating rating;
     }
 
     @Entity(tableName = "books_categories",
-            primaryKeys = {"isbn", "shortCode"},
-            indices = {@Index("isbn"), @Index("shortCode")},
+            primaryKeys = {"isbnBook", "isbnCategory"},
+            indices = {@Index("isbnBook"), @Index("isbnCategory")},
             foreignKeys = { @ForeignKey(entity = Category.class,
-                                        parentColumns = "shortCode",
-                                        childColumns = "shortCode",
+                                        parentColumns = "isbn",
+                                        childColumns = "isbnCategory",
                                         onDelete = ForeignKey.CASCADE),
                             @ForeignKey(entity = Book.class,
                                         parentColumns = "isbn",
-                                        childColumns = "isbn",
+                                        childColumns = "isbnBook",
                                         onDelete = ForeignKey.CASCADE)})
     static class BooksTable {
         @NonNull
-        String isbn;
+        String isbnBook;
         @NonNull
-        String shortCode;
+        String isbnCategory;
         Rating rating;
 
         public BooksTable() {}
 
         @Ignore
-        public BooksTable(@NonNull String isbn, @NonNull String shortCode, Rating rating) {
-            this.isbn = isbn;
-            this.shortCode = shortCode;
+        public BooksTable(@NonNull String isbnBook, @NonNull String isbnCategory, Rating rating) {
+            this.isbnBook = isbnBook;
+            this.isbnCategory = isbnCategory;
             this.rating = rating;
         }
     }

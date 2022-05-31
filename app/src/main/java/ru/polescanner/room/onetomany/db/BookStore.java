@@ -7,7 +7,6 @@ import androidx.room.Transaction;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +33,7 @@ public interface BookStore {
                 for (Map.Entry<Rating, Book> entry : cat.books.entrySet()) {
                     Rating r = entry.getKey();
                     Book b = entry.getValue();
-                    bcj.add(new Book.BooksTable(b.isbn, cat.shortCode, r));
+                    bcj.add(new Book.BooksTable(b.isbn, cat.isbn, r));
                 }
             }
         addPojoCategory(category);
@@ -42,8 +41,9 @@ public interface BookStore {
     }
 
 
-    @Query("SELECT * FROM categories JOIN books_categories ON categories.shortCode = books_categories.shortCode " +
-                                    "JOIN books ON books.isbn = books_categories.isbn")
+    @Query("SELECT isbnBook as b_isbn, isbnCategory as c_isbn, displayName as c_displayName, title as b_title, rating " +
+            "FROM categories JOIN books_categories ON categories.isbn = books_categories.isbnCategory " +
+                                    "JOIN books ON books.isbn = books_categories.isbnBook")
     List<Book.BooksMap> getAllCategoryAndBook();
 
     //ToDo Rethink of many objects-copy in the system.
@@ -69,9 +69,10 @@ public interface BookStore {
         return category;
     }
 
-    @Query("SELECT * FROM categories JOIN books_categories ON categories.shortCode = books_categories.shortCode " +
-                                    "JOIN books ON books.isbn = books_categories.isbn " +
-            "WHERE categories.shortCode = :id")
+    @Query("SELECT isbnBook as b_isbn, isbnCategory as c_isbn, displayName as c_displayName, title as b_title, rating " +
+            "FROM categories JOIN books_categories ON categories.isbn = books_categories.isbnCategory " +
+                                    "JOIN books ON books.isbn = books_categories.isbnBook " +
+            "WHERE categories.isbn = :id")
     List<Book.BooksMap> getByIdCategoryAndBook(String id);
 
 
@@ -82,7 +83,7 @@ public interface BookStore {
     @Query("SELECT * FROM categories")
     List<Category> getAllPojoCategories();
 
-    @Query("SELECT * FROM categories WHERE shortCode = :id")
+    @Query("SELECT * FROM categories WHERE isbn = :id")
     Category getByIdPojoCategory(String id);
 
 

@@ -69,7 +69,7 @@ public class ExampleInstrumentedTest {
         assertThat(all.get(1).books.values()).containsExactly(bookOne, bookThree);
         assertThat(all.get(0).books.keySet()).containsExactly(Rating.A, Rating.B);
 
-        Category one = sut.getById(categoryTwo.shortCode);
+        Category one = sut.getById(categoryTwo.isbn);
         assertThat(one).isEqualTo(categoryTwo);
         assertThat(one.books.values()).containsExactly(bookOne, bookThree);
         assertThat(one.books.keySet()).containsExactly(Rating.A, Rating.C);
