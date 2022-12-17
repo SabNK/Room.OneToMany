@@ -22,34 +22,21 @@ import java.util.List;
 import java.util.Map;
 
 @Entity(    tableName = "books")
-public class Book {
+public class Book extends EntityDb {
     @NonNull
-    @PrimaryKey
-    String isbn;
+    public String isbn;
     String title;
 
     public Book() {}
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Book book = (Book) o;
-
-        return isbn.equals(book.isbn);
-    }
-
-    @Override
-    public int hashCode() {
-        return isbn.hashCode();
-    }
-
     @Ignore
-    public Book(String isbn, String title) {
+    public Book(@NonNull String id, int version, @NonNull String isbn, String title) {
+        super(id, version);
         this.isbn = isbn;
         this.title = title;
     }
+
+
 
     public static class BooksMap {
         @Embedded(prefix = "c_")
@@ -60,19 +47,19 @@ public class Book {
     }
 
     @Entity(tableName = "books_categories",
-            primaryKeys = {"isbnBook", "isbnCategory"},
-            indices = {@Index("isbnBook"), @Index("isbnCategory")},
+            primaryKeys = {"idBook", "isbnCategory"},
+            indices = {@Index("idBook"), @Index("isbnCategory")},
             foreignKeys = { @ForeignKey(entity = Category.class,
                                         parentColumns = "isbn",
                                         childColumns = "isbnCategory",
                                         onDelete = ForeignKey.CASCADE),
                             @ForeignKey(entity = Book.class,
-                                        parentColumns = "isbn",
-                                        childColumns = "isbnBook",
+                                        parentColumns = "id",
+                                        childColumns = "idBook",
                                         onDelete = ForeignKey.CASCADE)})
     static class BooksTable {
         @NonNull
-        String isbnBook;
+        String idBook;
         @NonNull
         String isbnCategory;
         Rating rating;
@@ -80,8 +67,8 @@ public class Book {
         public BooksTable() {}
 
         @Ignore
-        public BooksTable(@NonNull String isbnBook, @NonNull String isbnCategory, Rating rating) {
-            this.isbnBook = isbnBook;
+        public BooksTable(@NonNull String idBook, @NonNull String isbnCategory, Rating rating) {
+            this.idBook = idBook;
             this.isbnCategory = isbnCategory;
             this.rating = rating;
         }

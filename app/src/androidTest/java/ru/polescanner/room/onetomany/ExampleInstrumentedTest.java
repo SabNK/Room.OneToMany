@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 import static org.junit.Assert.*;
 import static com.google.common.truth.Truth.assertThat;
 
+import java.util.Arrays;
 import java.util.List;
 
 import ru.polescanner.room.onetomany.db.AppDatabase;
@@ -21,6 +22,7 @@ import ru.polescanner.room.onetomany.db.Book;
 import ru.polescanner.room.onetomany.db.BookStore;
 import ru.polescanner.room.onetomany.db.Category;
 import ru.polescanner.room.onetomany.db.Rating;
+import ru.polescanner.room.onetomany.db.User;
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -31,6 +33,11 @@ import ru.polescanner.room.onetomany.db.Rating;
 public class ExampleInstrumentedTest {
     private AppDatabase mDb;
     private BookStore sut;
+    Category categoryOne;
+    Category categoryTwo;
+    Book bookOne;
+    Book bookTwo;
+    Book bookThree;
 
     @Before
     public void createDb(){
@@ -42,20 +49,25 @@ public class ExampleInstrumentedTest {
         sut = mDb.bookDbDao();
     }
 
+    @Before
+    public void initiate(){
+        String shortCodeOne = "stuff";
+        String shortCodeTwo = "love";
+        categoryOne = new Category(shortCodeOne, "Books about stuff");
+        categoryTwo = new Category(shortCodeTwo, "Books about love");
+        bookOne = new Book("1", 0, "333", "Feed");
+        bookTwo = new Book("2", 0, "555", "Dies the Fire");
+        bookThree = new Book("3", 0, "777", "Love me tender");
+    }
+
     @After
     public void closeDb() {
         mDb.close();
     }
 
     @Test
-    public void roomTest(){
-        String shortCodeOne = "stuff";
-        String shortCodeTwo = "love";
-        Category categoryOne = new Category(shortCodeOne, "Books about stuff");
-        Category categoryTwo = new Category(shortCodeTwo, "Books about love");
-        Book bookOne = new Book("333", "Feed");
-        Book bookTwo = new Book("555", "Dies the Fire");
-        Book bookThree = new Book("777", "Love me tender");
+    public void roomTestMap(){
+
         categoryOne.books.put(Rating.A, bookOne);
         categoryOne.books.put(Rating.B, bookTwo);
 
@@ -73,6 +85,37 @@ public class ExampleInstrumentedTest {
         assertThat(one).isEqualTo(categoryTwo);
         assertThat(one.books.values()).containsExactly(bookOne, bookThree);
         assertThat(one.books.keySet()).containsExactly(Rating.A, Rating.C);
+    }
+
+    @Test
+    public void roomTestManyToMany() {
+        User u1 = new User("10", 0 , "Nick", bookOne, Arrays.asList(bookOne, bookThree));
+        User u2 = new User("11", 0 , "Petr", bookTwo, Arrays.asList(bookTwo));
+
+        sut.addUsers(u2);
+        List<User> users = sut.getUsersSimple();
+        assertThat(users).hasSize(1);
+
+        sut.addUsers(u1);
+        users = sut.getUsersSimple();
+        assertThat(users).hasSize(2);
+        assertThat(users).containsExactly(u1, u2);
+
+        List<User.WithBooks> uWithBooks = sut.getUsersWithBooks();
+        assertThat(uWithBooks).hasSize(2);
+
+
+        users = sut.getUsers();
+        assertThat(users).hasSize(2);
+        assertThat(users).containsExactly(u1, u2);
+        User validateUser = new User("12", 0 , "", bookThree, Arrays.asList(bookOne));
+        for (User u : users) {
+            if (u.equals(u1))
+                validateUser = u;
+        }
+        assertThat(validateUser.taken).contains(bookOne);
+        assertThat(validateUser.taken).contains(bookThree);
+        assertThat(validateUser.favourite.isbn).isEqualTo(bookOne.isbn);
     }
 
 

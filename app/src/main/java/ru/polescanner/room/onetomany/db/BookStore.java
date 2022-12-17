@@ -7,8 +7,11 @@ import androidx.room.Transaction;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @androidx.room.Dao
 public interface BookStore {
@@ -41,9 +44,9 @@ public interface BookStore {
     }
 
 
-    @Query("SELECT isbnBook as b_isbn, isbnCategory as c_isbn, displayName as c_displayName, title as b_title, rating " +
+    @Query("SELECT idBook as b_id, isbnCategory as c_isbn, displayName as c_displayName, title as b_title, rating " +
             "FROM categories JOIN books_categories ON categories.isbn = books_categories.isbnCategory " +
-                                    "JOIN books ON books.isbn = books_categories.isbnBook")
+                                    "JOIN books ON books.id = books_categories.idBook")
     List<Book.BooksMap> getAllCategoryAndBook();
 
     //ToDo Rethink of many objects-copy in the system.
@@ -69,9 +72,9 @@ public interface BookStore {
         return category;
     }
 
-    @Query("SELECT isbnBook as b_isbn, isbnCategory as c_isbn, displayName as c_displayName, title as b_title, rating " +
+    @Query("SELECT idBook as b_id, isbnCategory as c_isbn, displayName as c_displayName, title as b_title, rating " +
             "FROM categories JOIN books_categories ON categories.isbn = books_categories.isbnCategory " +
-                                    "JOIN books ON books.isbn = books_categories.isbnBook " +
+                                    "JOIN books ON books.id = books_categories.idBook " +
             "WHERE categories.isbn = :id")
     List<Book.BooksMap> getByIdCategoryAndBook(String id);
 
@@ -85,6 +88,50 @@ public interface BookStore {
 
     @Query("SELECT * FROM categories WHERE isbn = :id")
     Category getByIdPojoCategory(String id);
+
+    @Transaction
+    @Query("SELECT * FROM users")
+    public List<User.WithBooks> getUsersWithBooks();
+
+    public default List<User> getUsers(){
+        List<User.WithBooks> usersWithBooks = getUsersWithBooks();
+        Map<User, User> users = new HashMap<>();
+        for (User.WithBooks uwb : usersWithBooks) {
+            users.put(uwb.user, uwb.user);
+        }
+        for (User.WithBooks uwb : usersWithBooks) {
+            if (users.get(uwb.user).taken ==  null)
+                users.get(uwb.user).taken = uwb.books;
+            else users.get(uwb.user).taken.addAll(uwb.books);
+        }
+        List<User> result = new ArrayList<User>();
+        result.addAll(users.values());
+        return result;
+    }
+
+    @Query("SELECT * FROM users")
+    public List<User> getUsersSimple();
+
+    @Transaction
+    public default void addUsers(User... users){
+        addUsersSimple(users);
+        List<Book> books = new ArrayList<>();
+        List<User.UserBookCrossRef> ubcrs = new ArrayList<>();
+        for(User u : users) {
+            books.addAll(u.taken);
+            for (Book b : u.taken)
+                ubcrs.add(new User.UserBookCrossRef(u.id, b.id));
+        }
+        add(books.toArray(new Book[0]));
+        addUserWithBook(ubcrs.toArray(new User.UserBookCrossRef[0]));
+    }
+
+    @Insert
+    void addUserWithBook(User.UserBookCrossRef... ubcrs);
+
+    @Insert
+    void addUsersSimple(User... users);
+
 
 
 }
